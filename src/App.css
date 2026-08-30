@@ -262,6 +262,18 @@
   animation: ritualPulse 1.2s ease-in-out infinite;
 }
 
+.notice-banner {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(138, 208, 255, 0.22);
+  background:
+    radial-gradient(circle at left center, rgba(138, 208, 255, 0.12), transparent 28%),
+    rgba(255, 255, 255, 0.035);
+  color: var(--text-main);
+  line-height: 1.7;
+}
+
 .coin-rules,
 .coin-progress,
 .number-tips,

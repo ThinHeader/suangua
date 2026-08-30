@@ -22,6 +22,25 @@ type Mode = 'coin' | 'meihua'
 type ExportTheme = 'dark' | 'paper'
 type CoinRow = Array<CoinFace | null>
 
+type SavePickerAcceptType = {
+  description?: string
+  accept: Record<string, string[]>
+}
+
+type SavePickerOptions = {
+  suggestedName?: string
+  types?: SavePickerAcceptType[]
+}
+
+type SaveFilePickerWindow = Window & {
+  showSaveFilePicker?: (options?: SavePickerOptions) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: Blob | string) => Promise<void>
+      close: () => Promise<void>
+    }>
+  }>
+}
+
 const FACE_OPTIONS: Array<{
   value: CoinFace
   title: string
@@ -317,11 +336,60 @@ function triggerDownload(downloadUrl: string, fileName: string) {
   document.body.removeChild(link)
 }
 
-function downloadTextFile(fileName: string, text: string) {
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+function supportsSaveFilePicker(): boolean {
+  return typeof (window as SaveFilePickerWindow).showSaveFilePicker === 'function'
+}
+
+async function saveBlobWithPicker(
+  fileName: string,
+  blob: Blob,
+  types: SavePickerAcceptType[],
+): Promise<boolean> {
+  const saveWindow = window as SaveFilePickerWindow
+
+  if (!saveWindow.showSaveFilePicker) {
+    return false
+  }
+
+  try {
+    const handle = await saveWindow.showSaveFilePicker({
+      suggestedName: fileName,
+      types,
+    })
+    const writable = await handle.createWritable()
+    await writable.write(blob)
+    await writable.close()
+    return true
+  } catch (error) {
+    // 用户点取消时不把流程判成真正异常，直接回退浏览器下载即可。
+    console.warn('原生另存为未完成，回退到浏览器下载。', error)
+    return false
+  }
+}
+
+function downloadBlobFile(fileName: string, blob: Blob) {
   const downloadUrl = URL.createObjectURL(blob)
   triggerDownload(downloadUrl, fileName)
   URL.revokeObjectURL(downloadUrl)
+}
+
+async function downloadTextFile(fileName: string, text: string): Promise<'picker' | 'download'> {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const saved = await saveBlobWithPicker(fileName, blob, [
+    {
+      description: '文本文件',
+      accept: {
+        'text/plain': ['.txt'],
+      },
+    },
+  ])
+
+  if (saved) {
+    return 'picker'
+  }
+
+  downloadBlobFile(fileName, blob)
+  return 'download'
 }
 
 function loadImageFromUrl(imageUrl: string): Promise<HTMLImageElement> {
@@ -355,7 +423,7 @@ async function exportReadingAsImage({
   theme: ExportTheme
   baseHexagram: HexagramSnapshot
   changedHexagram: HexagramSnapshot
-}) {
+}): Promise<'picker' | 'download'> {
   const themeConfig = getExportThemeConfig(theme)
   const rect = element.getBoundingClientRect()
   const cloned = cloneElementWithInlineStyles(element)
@@ -546,8 +614,32 @@ async function exportReadingAsImage({
     context.scale(scale, scale)
     context.drawImage(image, 0, 0, Math.ceil(rect.width), fullHeight)
 
-    const pngUrl = canvas.toDataURL('image/png')
-    triggerDownload(pngUrl, fileName)
+    const pngBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('当前浏览器环境不支持图片导出。'))
+          return
+        }
+
+        resolve(blob)
+      }, 'image/png')
+    })
+
+    const saved = await saveBlobWithPicker(fileName, pngBlob, [
+      {
+        description: 'PNG 图片',
+        accept: {
+          'image/png': ['.png'],
+        },
+      },
+    ])
+
+    if (saved) {
+      return 'picker'
+    }
+
+    downloadBlobFile(fileName, pngBlob)
+    return 'download'
   } finally {
     URL.revokeObjectURL(svgUrl)
   }
@@ -1137,10 +1229,12 @@ function App() {
   const [exportTheme, setExportTheme] = useState<ExportTheme>('dark')
   const [rollingRows, setRollingRows] = useState<number[]>([])
   const [ritualMessage, setRitualMessage] = useState('')
+  const [exportNotice, setExportNotice] = useState('')
   const resultPanelRef = useRef<HTMLElement | null>(null)
   const rollingIntervalRef = useRef<number | null>(null)
   const rollingFinishRef = useRef<number | null>(null)
   const ritualMessageRef = useRef<number | null>(null)
+  const exportNoticeRef = useRef<number | null>(null)
 
   const filledCoinRows = coinBoard.filter((row) => row.every(Boolean)).length
 
@@ -1218,6 +1312,10 @@ function App() {
       if (ritualMessageRef.current !== null) {
         window.clearTimeout(ritualMessageRef.current)
       }
+
+      if (exportNoticeRef.current !== null) {
+        window.clearTimeout(exportNoticeRef.current)
+      }
     }
   }, [])
 
@@ -1234,6 +1332,22 @@ function App() {
     ritualMessageRef.current = window.setTimeout(() => {
       setRitualMessage('')
       ritualMessageRef.current = null
+    }, duration)
+  }
+
+  function clearExportNoticeTimer() {
+    if (exportNoticeRef.current !== null) {
+      window.clearTimeout(exportNoticeRef.current)
+      exportNoticeRef.current = null
+    }
+  }
+
+  function setTemporaryExportNotice(message: string, duration = 3200) {
+    setExportNotice(message)
+    clearExportNoticeTimer()
+    exportNoticeRef.current = window.setTimeout(() => {
+      setExportNotice('')
+      exportNoticeRef.current = null
     }, duration)
   }
 
@@ -1377,7 +1491,12 @@ function App() {
 
     try {
       const fileName = `suangua-${mode === 'coin' ? 'jinqiangua' : 'meihuayishu'}-${getExportThemeFileKey(exportTheme)}-${fileStamp}.txt`
-      downloadTextFile(fileName, exportText)
+      const saveMethod = await downloadTextFile(fileName, exportText)
+      setTemporaryExportNotice(
+        saveMethod === 'picker'
+          ? `已打开“另存为”窗口，请确认保存位置：${fileName}`
+          : `当前浏览器未提供“另存为”，文件已下载到默认下载目录：${fileName}`,
+      )
     } finally {
       window.setTimeout(() => setBusyAction(''), 800)
     }
@@ -1411,7 +1530,7 @@ function App() {
       }
 
       const fileName = `suangua-${mode === 'coin' ? 'jinqiangua' : 'meihuayishu'}-${getExportThemeFileKey(exportTheme)}-${fileStamp}.png`
-      await exportReadingAsImage({
+      const saveMethod = await exportReadingAsImage({
         element: resultPanelRef.current,
         fileName,
         title: getReadingTitle(mode),
@@ -1431,8 +1550,14 @@ function App() {
         baseHexagram,
         changedHexagram,
       })
+      setTemporaryExportNotice(
+        saveMethod === 'picker'
+          ? `已打开“另存为”窗口，请确认保存位置：${fileName}`
+          : `当前浏览器未提供“另存为”，图片已下载到默认下载目录：${fileName}`,
+      )
     } catch (error) {
       console.error('导出图片失败', error)
+      setTemporaryExportNotice('导出图片失败，请稍后重试。')
     } finally {
       setBusyAction('')
     }
@@ -1667,6 +1792,9 @@ function App() {
               <p className="eyebrow">结果解读</p>
               <h2>{mode === 'coin' ? '本卦、动爻与变卦' : '体用、五行与变卦'}</h2>
               <p className="subtle-text">{`当前导出主题：${getExportThemeLabel(exportTheme)}`}</p>
+              <p className="subtle-text">
+                {supportsSaveFilePicker() ? '当前浏览器支持“另存为”面板。' : '当前浏览器将使用默认下载目录保存文件。'}
+              </p>
             </div>
             <div className="card-actions">
               <ActionButton
@@ -1695,6 +1823,8 @@ function App() {
               />
             </div>
           </div>
+
+          {exportNotice ? <div className="notice-banner">{exportNotice}</div> : null}
 
           {summaryText ? (
             <section className="result-card">
