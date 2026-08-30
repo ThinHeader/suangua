@@ -1,0 +1,733 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hero-panel,
+.mode-panel,
+.input-panel,
+.result-panel,
+.result-card {
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(24px);
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 40px;
+  border-radius: 32px;
+  display: grid;
+  gap: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 170, 96, 0.2), transparent 28%),
+    radial-gradient(circle at 20% 10%, rgba(118, 92, 255, 0.25), transparent 24%),
+    var(--panel-bg);
+}
+
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: auto -80px -120px auto;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 780px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero-text {
+  max-width: 720px;
+  font-size: 18px;
+  color: var(--text-soft);
+}
+
+.hero-highlights {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-highlights span,
+.summary-chip,
+.trigram-pair span,
+.coin-rules span,
+.coin-progress span,
+.row-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.mode-panel,
+.input-panel,
+.result-panel {
+  padding: 28px;
+  border-radius: 28px;
+}
+
+.mode-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.mode-copy h2,
+.panel-head h2 {
+  margin-bottom: 0;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mode-button,
+.ghost-button,
+.action-button,
+.coin-face-button,
+.number-field input {
+  font: inherit;
+}
+
+.mode-button,
+.ghost-button,
+.coin-face-button {
+  border: 1px solid var(--panel-border-strong);
+  background: var(--surface-strong);
+  color: var(--text-main);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.mode-button {
+  padding: 18px 20px;
+  border-radius: 22px;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mode-button strong {
+  font-size: 18px;
+}
+
+.mode-button span {
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.mode-button:hover,
+.ghost-button:hover,
+.coin-face-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mode-button:disabled,
+.ghost-button:disabled,
+.coin-face-button:disabled,
+.copy-button:disabled,
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.mode-button.is-active,
+.coin-face-button.is-active {
+  border-color: rgba(255, 203, 129, 0.55);
+  background: linear-gradient(135deg, rgba(132, 97, 255, 0.3), rgba(255, 170, 96, 0.16));
+  box-shadow: 0 18px 40px rgba(15, 18, 36, 0.24);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.panel-head,
+.result-card-head,
+.coin-row-head,
+.moving-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ghost-button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.copy-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.copy-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 203, 129, 0.45);
+}
+
+.copy-button.is-copied {
+  background: rgba(255, 203, 129, 0.16);
+  border-color: rgba(255, 203, 129, 0.55);
+}
+
+.action-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 203, 129, 0.35);
+  background: rgba(255, 203, 129, 0.08);
+  color: var(--text-main);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 203, 129, 0.55);
+}
+
+.action-button.is-active {
+  background: rgba(255, 203, 129, 0.18);
+  border-color: rgba(255, 203, 129, 0.68);
+}
+
+.ritual-banner {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 203, 129, 0.24);
+  background:
+    radial-gradient(circle at left center, rgba(255, 203, 129, 0.14), transparent 28%),
+    rgba(255, 255, 255, 0.035);
+  color: var(--text-main);
+  line-height: 1.7;
+  animation: ritualPulse 1.2s ease-in-out infinite;
+}
+
+.coin-rules,
+.coin-progress,
+.number-tips,
+.note-stack,
+.moving-list,
+.facts-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.coin-rules,
+.coin-progress {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
+.coin-progress {
+  margin-top: 14px;
+}
+
+.coin-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.coin-row {
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.coin-row.is-complete {
+  border-color: rgba(255, 203, 129, 0.3);
+  background: rgba(255, 203, 129, 0.08);
+}
+
+.coin-row.is-rolling {
+  border-color: rgba(255, 203, 129, 0.46);
+  box-shadow: 0 0 0 1px rgba(255, 203, 129, 0.08), 0 18px 34px rgba(255, 170, 96, 0.12);
+  animation: rowGlow 0.85s ease-in-out infinite;
+}
+
+.row-order,
+.result-label,
+.fact-label,
+.coin-slot-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.coin-row h3,
+.result-card h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.coin-row-body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.coin-slot {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(7, 10, 20, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.coin-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.coin-face-button {
+  min-height: 72px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+}
+
+.coin-row.is-rolling .coin-face-button {
+  border-color: rgba(255, 203, 129, 0.28);
+}
+
+.coin-face-button strong,
+.fact-box strong {
+  font-size: 18px;
+}
+
+.coin-face-button span,
+.fact-box p,
+.hexagram-copy p,
+.moving-item p,
+.note-box p,
+.empty-state p,
+.number-field small {
+  color: var(--text-soft);
+}
+
+.number-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.number-field {
+  display: grid;
+  gap: 10px;
+}
+
+.number-field > span {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.number-field input {
+  width: 100%;
+  min-height: 60px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid var(--panel-border-strong);
+  background: rgba(8, 11, 22, 0.58);
+  color: var(--text-main);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.number-field input:focus {
+  border-color: rgba(255, 203, 129, 0.65);
+  box-shadow: 0 0 0 4px rgba(255, 203, 129, 0.12);
+}
+
+.number-tips {
+  margin-top: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.question-panel {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.question-field {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.question-field > span {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.question-field textarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--panel-border-strong);
+  background: rgba(8, 11, 22, 0.58);
+  color: var(--text-main);
+  resize: vertical;
+  outline: none;
+}
+
+.question-field textarea:focus {
+  border-color: rgba(255, 203, 129, 0.65);
+  box-shadow: 0 0 0 4px rgba(255, 203, 129, 0.12);
+}
+
+.result-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.result-card {
+  padding: 22px;
+  border-radius: 24px;
+}
+
+.result-card + .result-card {
+  margin-top: 0;
+}
+
+.hexagram-panel-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.hexagram-figure {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(7, 10, 20, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hexagram-line-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.hexagram-line-row + .hexagram-line-row {
+  margin-top: 10px;
+}
+
+.hexagram-line-name {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.hexagram-line {
+  min-height: 16px;
+  display: grid;
+  align-items: center;
+}
+
+.hexagram-line.is-yang {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.hexagram-line.is-yin {
+  grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+}
+
+.hexagram-line.is-highlight .line-full,
+.hexagram-line.is-highlight .line-half {
+  background: linear-gradient(90deg, #ffe2a8, #ffb570);
+  box-shadow: 0 0 0 1px rgba(255, 228, 180, 0.08), 0 8px 18px rgba(255, 170, 96, 0.2);
+}
+
+.line-full,
+.line-half {
+  display: block;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(230, 234, 255, 0.95), rgba(165, 180, 255, 0.88));
+}
+
+.line-gap {
+  display: block;
+}
+
+.hexagram-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.classic-quote,
+.classic-reading-item {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.classic-quote {
+  display: grid;
+  gap: 10px;
+}
+
+.classic-quote-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.classic-reading-list {
+  display: grid;
+  gap: 14px;
+}
+
+.classic-reading-item {
+  display: grid;
+  gap: 10px;
+}
+
+.classic-raw-text {
+  color: var(--text-main);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.summary-output {
+  margin: 0;
+  padding: 16px 18px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.85;
+  color: var(--text-main);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  font-family: inherit;
+}
+
+.judgement {
+  color: var(--text-main);
+  font-size: 18px;
+}
+
+.subtle-text {
+  color: var(--text-muted);
+}
+
+.moving-item,
+.fact-box,
+.note-box,
+.empty-state {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(7, 10, 20, 0.24);
+}
+
+.moving-item-head span {
+  color: var(--accent-strong);
+  font-size: 14px;
+}
+
+.moving-transform {
+  color: var(--text-main);
+}
+
+.facts-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.empty-state {
+  display: grid;
+  gap: 8px;
+  min-height: 220px;
+  place-content: center;
+  text-align: center;
+}
+
+@keyframes ritualPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 203, 129, 0.04);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 203, 129, 0.06);
+  }
+}
+
+@keyframes rowGlow {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 1px rgba(255, 203, 129, 0.08), 0 18px 34px rgba(255, 170, 96, 0.1);
+  }
+
+  50% {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(255, 203, 129, 0.16), 0 24px 42px rgba(255, 170, 96, 0.16);
+  }
+}
+
+@media (max-width: 1120px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .hexagram-panel-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .hero-panel,
+  .mode-panel,
+  .input-panel,
+  .result-panel,
+  .result-card {
+    border-radius: 24px;
+  }
+
+  .hero-panel,
+  .mode-panel,
+  .input-panel,
+  .result-panel {
+    padding: 20px;
+  }
+
+  .mode-switch,
+  .coin-rules,
+  .coin-progress,
+  .number-grid,
+  .number-tips,
+  .facts-grid,
+  .coin-row-body {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head,
+  .result-card-head,
+  .coin-row-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .row-value,
+  .summary-chip {
+    justify-content: flex-start;
+  }
+
+  .card-actions,
+  .classic-quote-head {
+    justify-content: flex-start;
+  }
+
+  .card-actions > .action-button,
+  .card-actions > .copy-button,
+  .card-actions > .ghost-button {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-panel {
+    padding: 18px;
+  }
+
+  .hero-text {
+    font-size: 16px;
+  }
+
+  .coin-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coin-face-button {
+    min-height: 64px;
+  }
+
+  .hexagram-line-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .hexagram-line.is-yin {
+    grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr);
+  }
+}
