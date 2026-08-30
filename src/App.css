@@ -1,7 +1,7 @@
 .app-shell {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .hero-panel,
@@ -21,6 +21,7 @@
   padding: 40px;
   border-radius: 32px;
   display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   gap: 28px;
   background:
     radial-gradient(circle at top right, rgba(255, 170, 96, 0.2), transparent 28%),
@@ -42,6 +43,8 @@
   position: relative;
   z-index: 1;
   max-width: 780px;
+  display: grid;
+  gap: 18px;
 }
 
 .eyebrow {
@@ -64,6 +67,36 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.hero-side {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.hero-insight-card {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(9, 13, 27, 0.72), rgba(16, 22, 40, 0.58));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.hero-insight-card span {
+  color: var(--accent-strong);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-insight-card strong {
+  font-size: 1.15rem;
+  line-height: 1.45;
 }
 
 .hero-highlights span,
@@ -94,6 +127,21 @@
 .mode-panel {
   display: grid;
   gap: 20px;
+}
+
+.mode-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mode-note-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .mode-copy h2,
@@ -177,6 +225,67 @@
   align-items: start;
 }
 
+.workflow-steps {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.step-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.step-card.is-current {
+  border-color: rgba(255, 203, 129, 0.28);
+  background: linear-gradient(180deg, rgba(255, 203, 129, 0.08), rgba(255, 255, 255, 0.03));
+}
+
+.step-card.is-done {
+  border-color: rgba(138, 208, 255, 0.2);
+}
+
+.step-card-index {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.step-card-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.step-card-copy strong {
+  font-size: 1rem;
+}
+
+.step-card-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
 .panel-head,
 .result-card-head,
 .coin-row-head,
@@ -249,6 +358,89 @@
   border-color: rgba(255, 203, 129, 0.68);
 }
 
+.progress-card {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.progress-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-card-head > div {
+  display: grid;
+  gap: 6px;
+}
+
+.progress-track {
+  position: relative;
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 208, 142, 0.82), rgba(118, 92, 255, 0.76));
+}
+
+.line-navigator {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.line-nav-button {
+  min-height: 70px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(8, 11, 22, 0.48);
+  color: var(--text-main);
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.line-nav-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 203, 129, 0.28);
+}
+
+.line-nav-button span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.line-nav-button strong {
+  font-size: 15px;
+}
+
+.line-nav-button.is-current {
+  border-color: rgba(255, 203, 129, 0.48);
+  background: rgba(255, 203, 129, 0.1);
+}
+
+.line-nav-button.is-complete {
+  border-color: rgba(138, 208, 255, 0.22);
+}
+
 .ritual-banner {
   margin-top: 14px;
   padding: 14px 16px;
@@ -310,6 +502,11 @@
 .coin-row.is-complete {
   border-color: rgba(255, 203, 129, 0.3);
   background: rgba(255, 203, 129, 0.08);
+}
+
+.coin-row.is-next {
+  border-color: rgba(138, 208, 255, 0.32);
+  box-shadow: 0 0 0 1px rgba(138, 208, 255, 0.08);
 }
 
 .coin-row.is-rolling {
@@ -459,9 +656,109 @@
   box-shadow: 0 0 0 4px rgba(255, 203, 129, 0.12);
 }
 
+.question-field-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.question-field-foot span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.question-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.question-chip {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.question-chip:hover,
+.question-chip.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(255, 203, 129, 0.35);
+  background: rgba(255, 203, 129, 0.1);
+  color: var(--text-main);
+}
+
 .result-panel {
   display: grid;
   gap: 18px;
+  position: sticky;
+  top: 24px;
+}
+
+.result-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.status-badge.is-ready {
+  border-color: rgba(255, 203, 129, 0.35);
+  background: rgba(255, 203, 129, 0.1);
+  color: var(--text-main);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.overview-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(7, 10, 20, 0.24);
+}
+
+.overview-card span {
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.overview-card strong {
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .result-card {
@@ -633,6 +930,29 @@
   text-align: center;
 }
 
+.empty-state-tips {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.empty-state-tips span {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text-soft);
+  text-align: left;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(255, 203, 129, 0.56);
+  outline-offset: 2px;
+}
+
 @keyframes ritualPulse {
   0%,
   100% {
@@ -658,12 +978,20 @@
 }
 
 @media (max-width: 1120px) {
+  .hero-panel {
+    grid-template-columns: 1fr;
+  }
+
   .workspace {
     grid-template-columns: 1fr;
   }
 
   .hexagram-panel-body {
     grid-template-columns: 1fr;
+  }
+
+  .result-panel {
+    position: static;
   }
 }
 
@@ -684,18 +1012,23 @@
   }
 
   .mode-switch,
+  .mode-notes,
   .coin-rules,
   .coin-progress,
   .number-grid,
   .number-tips,
   .facts-grid,
-  .coin-row-body {
+  .coin-row-body,
+  .overview-grid,
+  .line-navigator {
     grid-template-columns: 1fr;
   }
 
   .panel-head,
   .result-card-head,
-  .coin-row-head {
+  .coin-row-head,
+  .progress-card-head,
+  .result-status {
     flex-direction: column;
     align-items: stretch;
   }
@@ -715,6 +1048,15 @@
   .card-actions > .ghost-button {
     width: fit-content;
   }
+
+  .step-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .step-card-state {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 560px) {
@@ -724,6 +1066,13 @@
 
   .hero-text {
     font-size: 16px;
+  }
+
+  .hero-insight-card,
+  .question-panel,
+  .result-card,
+  .coin-row {
+    border-radius: 20px;
   }
 
   .coin-toggle {
@@ -741,5 +1090,26 @@
 
   .hexagram-line.is-yin {
     grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .mode-button,
+  .ghost-button,
+  .action-button,
+  .coin-face-button,
+  .copy-button,
+  .question-chip,
+  .line-nav-button {
+    transition-duration: 0.01ms;
+  }
+
+  .ritual-banner,
+  .coin-row.is-rolling {
+    animation: none;
   }
 }

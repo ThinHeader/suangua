@@ -58,6 +58,13 @@ const FACE_OPTIONS: Array<{
   },
 ]
 
+const QUESTION_SUGGESTIONS = [
+  '这次合作是否适合继续推进？',
+  '近期换工作时机如何？',
+  '当前项目下一步应先抓什么？',
+  '这段关系接下来会如何发展？',
+]
+
 function createEmptyCoinBoard(): CoinRow[] {
   // 六次投掷严格按“从下往上”存储。
   // 因此数组第 0 行是初爻，第 5 行是上爻。
@@ -110,221 +117,199 @@ function formatExportFileTimestamp(date: Date): string {
   return `${year}${month}${day}-${hour}${minute}${second}`
 }
 
-function getExportThemeConfig(theme: ExportTheme) {
+function getExportCanvasTheme(theme: ExportTheme) {
   if (theme === 'paper') {
     return {
-      wrapperBackground:
-        'linear-gradient(180deg, rgb(248, 240, 224) 0%, rgb(240, 230, 210) 100%)',
-      wrapperColor: '#35261a',
-      headerBackground:
-        'radial-gradient(circle at top right, rgba(182, 118, 54, 0.18), transparent 35%), rgba(255, 252, 246, 0.92)',
-      headerBorder: '1px solid rgba(111, 77, 42, 0.18)',
-      eyebrowColor: '#8a5b28',
-      overviewColor: '#4e3521',
-      metaColor: 'rgba(69, 46, 29, 0.72)',
-      panelBackground: 'rgba(255, 251, 245, 0.92)',
-      panelBorder: '1px solid rgba(111, 77, 42, 0.14)',
-      panelMutedBackground: 'rgba(248, 241, 231, 0.96)',
-      panelMutedBorder: '1px solid rgba(111, 77, 42, 0.12)',
-      accentColor: '#8a5b28',
-      lineColor: 'linear-gradient(90deg, #57402f, #7b5c44)',
-      lineShadow: 'none',
+      bgTop: '#f8f0e0',
+      bgBottom: '#eee0cb',
+      panel: '#fffaf2',
+      panelMuted: '#f6ecdd',
+      border: 'rgba(111, 77, 42, 0.16)',
+      text: '#35261a',
+      subtle: 'rgba(69, 46, 29, 0.76)',
+      accent: '#8a5b28',
+      line: '#6e4f39',
     }
   }
 
   return {
-    wrapperBackground: 'linear-gradient(180deg, rgb(6, 9, 20) 0%, rgb(11, 16, 32) 100%)',
-    wrapperColor: '#f6f1e8',
-    headerBackground:
-      'radial-gradient(circle at top right, rgba(255, 170, 96, 0.18), transparent 35%), rgba(255, 255, 255, 0.04)',
-    headerBorder: '1px solid rgba(255, 255, 255, 0.1)',
-    eyebrowColor: '#ffd08f',
-    overviewColor: '#fff4df',
-    metaColor: 'rgba(246, 241, 232, 0.78)',
-    panelBackground: 'rgba(255, 255, 255, 0.04)',
-    panelBorder: '1px solid rgba(255, 255, 255, 0.08)',
-    panelMutedBackground: 'rgba(255, 255, 255, 0.04)',
-    panelMutedBorder: '1px solid rgba(255, 255, 255, 0.08)',
-    accentColor: '#ffd08f',
-    lineColor: 'linear-gradient(90deg, rgba(230, 234, 255, 0.95), rgba(165, 180, 255, 0.88))',
-    lineShadow: '0 0 0 1px rgba(255, 228, 180, 0.08), 0 8px 18px rgba(255, 170, 96, 0.14)',
+    bgTop: '#060914',
+    bgBottom: '#0c1226',
+    panel: 'rgba(255, 255, 255, 0.05)',
+    panelMuted: 'rgba(255, 255, 255, 0.04)',
+    border: 'rgba(255, 255, 255, 0.1)',
+    text: '#f6f1e8',
+    subtle: 'rgba(246, 241, 232, 0.78)',
+    accent: '#ffd08f',
+    line: '#f0e8dc',
   }
 }
 
-function applyExportThemeToClone(root: HTMLElement, theme: ExportTheme) {
-  const themeConfig = getExportThemeConfig(theme)
+function wrapCanvasText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string[] {
+  const lines: string[] = []
 
-  if (theme === 'dark') {
-    return
-  }
+  text.split('\n').forEach((rawLine) => {
+    if (!rawLine.trim()) {
+      lines.push('')
+      return
+    }
 
-  // 纸张版不是简单换外层背景，而是把结果区内常见卡片面层一起改成浅色纸面，
-  // 否则导出会出现浅色头部配深色正文，整体观感会断裂。
-  root.style.color = themeConfig.wrapperColor
-  root.style.background = 'transparent'
-  root.style.border = 'none'
-  root.style.boxShadow = 'none'
+    let currentLine = ''
 
-  root.querySelectorAll<HTMLElement>('*').forEach((node) => {
-    node.style.color = themeConfig.wrapperColor
+    for (const char of rawLine) {
+      const nextLine = currentLine + char
+
+      if (currentLine && context.measureText(nextLine).width > maxWidth) {
+        lines.push(currentLine)
+        currentLine = char
+      } else {
+        currentLine = nextLine
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine)
+    }
   })
 
-  const panelSelectors = [
-    '.result-card',
-    '.classic-reading-item',
-    '.classic-quote',
-    '.summary-output',
-    '.empty-state',
-    '.moving-item',
-    '.fact-box',
-    '.note-box',
-    '.hexagram-figure',
-  ]
-
-  panelSelectors.forEach((selector) => {
-    root.querySelectorAll<HTMLElement>(selector).forEach((node) => {
-      node.style.background = themeConfig.panelBackground
-      node.style.border = themeConfig.panelBorder
-      node.style.boxShadow = 'none'
-    })
-  })
-
-  root.querySelectorAll<HTMLElement>('.subtle-text, .result-label, .fact-label, .hexagram-line-name').forEach((node) => {
-    node.style.color = themeConfig.metaColor
-  })
-
-  root.querySelectorAll<HTMLElement>('.summary-chip, .trigram-pair span, .row-value').forEach((node) => {
-    node.style.background = themeConfig.panelMutedBackground
-    node.style.border = themeConfig.panelMutedBorder
-    node.style.color = themeConfig.wrapperColor
-  })
-
-  root.querySelectorAll<HTMLElement>('.line-full, .line-half').forEach((node) => {
-    node.style.background = themeConfig.lineColor
-    node.style.boxShadow = themeConfig.lineShadow
-  })
+  return lines
 }
 
-function createExportHexagramPreview(
+function measureCanvasTextBlockHeight(lines: string[], lineHeight: number): number {
+  return lines.reduce((total, line) => total + (line ? lineHeight : lineHeight * 0.55), 0)
+}
+
+function drawCanvasTextBlock(
+  context: CanvasRenderingContext2D,
+  lines: string[],
+  x: number,
+  startY: number,
+  lineHeight: number,
+): number {
+  let currentY = startY
+
+  lines.forEach((line) => {
+    if (!line) {
+      currentY += lineHeight * 0.55
+      return
+    }
+
+    context.fillText(line, x, currentY)
+    currentY += lineHeight
+  })
+
+  return currentY
+}
+
+function buildRoundedRectPath(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const safeRadius = Math.min(radius, width / 2, height / 2)
+
+  context.beginPath()
+  context.moveTo(x + safeRadius, y)
+  context.arcTo(x + width, y, x + width, y + height, safeRadius)
+  context.arcTo(x + width, y + height, x, y + height, safeRadius)
+  context.arcTo(x, y + height, x, y, safeRadius)
+  context.arcTo(x, y, x + width, y, safeRadius)
+  context.closePath()
+}
+
+function fillRoundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  fillStyle: string | CanvasGradient,
+) {
+  buildRoundedRectPath(context, x, y, width, height, radius)
+  context.fillStyle = fillStyle
+  context.fill()
+}
+
+function strokeRoundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  strokeStyle: string,
+) {
+  buildRoundedRectPath(context, x, y, width, height, radius)
+  context.strokeStyle = strokeStyle
+  context.stroke()
+}
+
+function drawExportHexagramCard(
+  context: CanvasRenderingContext2D,
+  theme: ReturnType<typeof getExportCanvasTheme>,
   title: string,
   snapshot: HexagramSnapshot,
-  theme: ExportTheme,
-): HTMLElement {
-  const themeConfig = getExportThemeConfig(theme)
-  const card = document.createElement('div')
-  const label = document.createElement('strong')
-  const name = document.createElement('p')
-  const meta = document.createElement('p')
-  const figure = document.createElement('div')
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  fillRoundedRect(context, x, y, width, height, 26, theme.panelMuted)
+  strokeRoundedRect(context, x, y, width, height, 26, theme.border)
 
-  card.style.display = 'grid'
-  card.style.gap = '12px'
-  card.style.padding = '18px'
-  card.style.borderRadius = '20px'
-  card.style.border = themeConfig.panelBorder
-  card.style.background = themeConfig.panelBackground
+  context.fillStyle = theme.accent
+  context.font = '600 22px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText(title, x + 24, y + 36)
 
-  label.textContent = title
-  label.style.fontSize = '13px'
-  label.style.letterSpacing = '0.08em'
-  label.style.color = themeConfig.accentColor
+  context.fillStyle = theme.text
+  context.font = '700 34px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText(snapshot.hexagram.name, x + 24, y + 82)
 
-  name.textContent = snapshot.hexagram.name
-  name.style.margin = '0'
-  name.style.fontSize = '22px'
-  name.style.lineHeight = '1.35'
+  context.fillStyle = theme.subtle
+  context.font = '400 22px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText(
+    `${snapshot.upperTrigram.name}${snapshot.upperTrigram.symbol} / ${snapshot.lowerTrigram.name}${snapshot.lowerTrigram.symbol}`,
+    x + 24,
+    y + 118,
+  )
 
-  meta.textContent = `${snapshot.upperTrigram.name}${snapshot.upperTrigram.symbol} / ${snapshot.lowerTrigram.name}${snapshot.lowerTrigram.symbol}`
-  meta.style.margin = '0'
-  meta.style.fontSize = '14px'
-  meta.style.color = themeConfig.metaColor
-
-  figure.style.display = 'grid'
-  figure.style.gap = '10px'
-  figure.style.padding = '16px'
-  figure.style.borderRadius = '18px'
-  figure.style.border = themeConfig.panelBorder
-  figure.style.background = themeConfig.panelMutedBackground
+  const lineStartX = x + 24
+  const lineWidth = width - 48
+  const lineTopY = y + 148
+  const lineGap = 16
+  const lineHeight = 12
 
   snapshot.lines
     .slice()
     .reverse()
-    .forEach((line) => {
-      const row = document.createElement('div')
-
-      row.style.display = 'grid'
-      row.style.alignItems = 'center'
+    .forEach((line, index) => {
+      const currentY = lineTopY + index * (lineHeight + lineGap)
 
       if (line === 1) {
-        row.style.gridTemplateColumns = '1fr'
-        const full = document.createElement('span')
-        full.style.display = 'block'
-        full.style.width = '100%'
-        full.style.height = '12px'
-        full.style.borderRadius = '999px'
-        full.style.background = themeConfig.lineColor
-        full.style.boxShadow = themeConfig.lineShadow
-        row.appendChild(full)
-      } else {
-        row.style.gridTemplateColumns = '1fr 16px 1fr'
-        row.style.gap = '10px'
-
-        const left = document.createElement('span')
-        const gap = document.createElement('span')
-        const right = document.createElement('span')
-
-        ;[left, right].forEach((segment) => {
-          segment.style.display = 'block'
-          segment.style.width = '100%'
-          segment.style.height = '12px'
-          segment.style.borderRadius = '999px'
-          segment.style.background = themeConfig.lineColor
-          segment.style.boxShadow = themeConfig.lineShadow
-        })
-
-        gap.style.display = 'block'
-
-        row.appendChild(left)
-        row.appendChild(gap)
-        row.appendChild(right)
+        fillRoundedRect(context, lineStartX, currentY, lineWidth, lineHeight, 999, theme.line)
+        return
       }
 
-      figure.appendChild(row)
+      const segmentWidth = (lineWidth - 20) / 2
+      fillRoundedRect(context, lineStartX, currentY, segmentWidth, lineHeight, 999, theme.line)
+      fillRoundedRect(
+        context,
+        lineStartX + segmentWidth + 20,
+        currentY,
+        segmentWidth,
+        lineHeight,
+        999,
+        theme.line,
+      )
     })
-
-  card.appendChild(label)
-  card.appendChild(name)
-  card.appendChild(meta)
-  card.appendChild(figure)
-
-  return card
-}
-
-function serializeComputedStyle(style: CSSStyleDeclaration): string {
-  return Array.from(style)
-    .map((property) => `${property}:${style.getPropertyValue(property)};`)
-    .join('')
-}
-
-function cloneElementWithInlineStyles(source: HTMLElement): HTMLElement {
-  const clone = source.cloneNode(false) as HTMLElement
-  clone.setAttribute('style', serializeComputedStyle(window.getComputedStyle(source)))
-
-  Array.from(source.childNodes).forEach((childNode) => {
-    if (childNode.nodeType === Node.TEXT_NODE) {
-      clone.appendChild(childNode.cloneNode(true))
-      return
-    }
-
-    if (childNode instanceof HTMLElement) {
-      clone.appendChild(cloneElementWithInlineStyles(childNode))
-      return
-    }
-
-    clone.appendChild(childNode.cloneNode(true))
-  })
-
-  return clone
 }
 
 function triggerDownload(downloadUrl: string, fileName: string) {
@@ -392,17 +377,7 @@ async function downloadTextFile(fileName: string, text: string): Promise<'picker
   return 'download'
 }
 
-function loadImageFromUrl(imageUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = () => reject(new Error('导出图片时加载中间图像失败。'))
-    image.src = imageUrl
-  })
-}
-
 async function exportReadingAsImage({
-  element,
   fileName,
   title,
   exportedAt,
@@ -412,8 +387,8 @@ async function exportReadingAsImage({
   theme,
   baseHexagram,
   changedHexagram,
+  bodyText,
 }: {
-  element: HTMLElement
   fileName: string
   title: string
   exportedAt: string
@@ -423,226 +398,215 @@ async function exportReadingAsImage({
   theme: ExportTheme
   baseHexagram: HexagramSnapshot
   changedHexagram: HexagramSnapshot
+  bodyText: string
 }): Promise<'picker' | 'download'> {
-  const themeConfig = getExportThemeConfig(theme)
-  const rect = element.getBoundingClientRect()
-  const cloned = cloneElementWithInlineStyles(element)
-  const wrapper = document.createElement('div')
-  const header = document.createElement('div')
-  const eyebrow = document.createElement('p')
-  const titleNode = document.createElement('h1')
-  const overviewNode = document.createElement('p')
-  const metaNode = document.createElement('p')
-  const questionNode = document.createElement('div')
-  const questionLabel = document.createElement('strong')
-  const questionText = document.createElement('p')
-  const metaGrid = document.createElement('div')
-  const visualGrid = document.createElement('div')
-  const footer = document.createElement('div')
-  const footerTitle = document.createElement('strong')
-  const footerMeta = document.createElement('p')
+  const themePalette = getExportCanvasTheme(theme)
   const safeQuestion = question.trim() || '未填写，占断以卦象本身为主。'
+  const canvasWidth = 1200
+  const outerPadding = 40
+  const innerPadding = 28
+  const blockGap = 20
+  const metaCardGap = 14
+  const metaCardHeight = 108
+  const hexagramCardHeight = 360
+  const summaryWidth = canvasWidth - outerPadding * 2 - innerPadding * 2
+  const bodyWidth = summaryWidth
 
-  applyExportThemeToClone(cloned, theme)
+  const measureCanvas = document.createElement('canvas')
+  const measureContext = measureCanvas.getContext('2d')
 
-  wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
-  wrapper.style.width = `${Math.ceil(rect.width)}px`
-  wrapper.style.padding = '30px'
-  wrapper.style.boxSizing = 'border-box'
-  wrapper.style.display = 'grid'
-  wrapper.style.gap = '18px'
-  wrapper.style.background = themeConfig.wrapperBackground
-  wrapper.style.color = themeConfig.wrapperColor
+  if (!measureContext) {
+    throw new Error('当前浏览器环境不支持 canvas 导出。')
+  }
 
-  // 长图头部在导出时动态注入，不改页面本身结构。
-  // 这样既能保留页面实时交互，也能让导出的图片天然带上标题、时间与问题上下文。
-  header.style.display = 'grid'
-  header.style.gap = '10px'
-  header.style.padding = '22px 24px'
-  header.style.border = themeConfig.headerBorder
-  header.style.borderRadius = '24px'
-  header.style.background = themeConfig.headerBackground
+  measureContext.font = '400 24px "Microsoft YaHei", "PingFang SC", sans-serif'
+  const overviewLines = wrapCanvasText(measureContext, overviewLine, summaryWidth)
+  const questionLines = wrapCanvasText(measureContext, safeQuestion, summaryWidth)
+  const bodyLines = wrapCanvasText(measureContext, bodyText, bodyWidth)
 
-  eyebrow.textContent = '周易起卦台'
-  eyebrow.style.margin = '0'
-  eyebrow.style.color = themeConfig.eyebrowColor
-  eyebrow.style.fontSize = '12px'
-  eyebrow.style.letterSpacing = '0.18em'
-  eyebrow.style.textTransform = 'uppercase'
+  const metaRows = Math.max(1, Math.ceil(metaItems.length / 2))
+  const metaGridHeight = metaRows * metaCardHeight + Math.max(0, metaRows - 1) * metaCardGap
+  const overviewHeight = measureCanvasTextBlockHeight(overviewLines, 36)
+  const questionHeight = measureCanvasTextBlockHeight(questionLines, 34)
+  const bodyHeight = measureCanvasTextBlockHeight(bodyLines, 34)
 
-  titleNode.textContent = title
-  titleNode.style.margin = '0'
-  titleNode.style.fontSize = '30px'
-  titleNode.style.lineHeight = '1.25'
+  const headerHeight = 240 + overviewHeight + Math.max(0, metaGridHeight - metaCardHeight)
+  const questionBlockHeight = 68 + questionHeight
+  const bodyBlockHeight = 96 + bodyHeight
+  const footerHeight = 88
+  const canvasHeight =
+    outerPadding * 2 +
+    headerHeight +
+    blockGap +
+    questionBlockHeight +
+    blockGap +
+    hexagramCardHeight +
+    blockGap +
+    bodyBlockHeight +
+    blockGap +
+    footerHeight
 
-  overviewNode.textContent = overviewLine
-  overviewNode.style.margin = '0'
-  overviewNode.style.fontSize = '18px'
-  overviewNode.style.lineHeight = '1.6'
-  overviewNode.style.color = themeConfig.overviewColor
+  const canvas = document.createElement('canvas')
+  const scale = Math.max(window.devicePixelRatio || 1, 2)
+  canvas.width = Math.ceil(canvasWidth * scale)
+  canvas.height = Math.ceil(canvasHeight * scale)
 
-  metaNode.textContent = `导出时间：${exportedAt}`
-  metaNode.style.margin = '0'
-  metaNode.style.fontSize = '15px'
-  metaNode.style.color = themeConfig.metaColor
+  const context = canvas.getContext('2d')
 
-  visualGrid.style.display = 'grid'
-  visualGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'
-  visualGrid.style.gap = '14px'
-  visualGrid.appendChild(createExportHexagramPreview('本卦', baseHexagram, theme))
-  visualGrid.appendChild(createExportHexagramPreview('变卦', changedHexagram, theme))
+  if (!context) {
+    throw new Error('当前浏览器环境不支持 canvas 导出。')
+  }
 
-  metaGrid.style.display = 'grid'
-  metaGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'
-  metaGrid.style.gap = '12px'
+  context.scale(scale, scale)
+  context.textBaseline = 'top'
 
-  metaItems.forEach((item) => {
-    const metaItem = document.createElement('div')
-    const metaLabel = document.createElement('strong')
-    const metaValue = document.createElement('p')
+  // 这里改为纯 canvas 绘制，不再把 DOM 包进 foreignObject。
+  // 这样导出的每一笔都来自同源脚本绘制，浏览器不会再把画布标记为 tainted。
+  const backgroundGradient = context.createLinearGradient(0, 0, 0, canvasHeight)
+  backgroundGradient.addColorStop(0, themePalette.bgTop)
+  backgroundGradient.addColorStop(1, themePalette.bgBottom)
+  context.fillStyle = backgroundGradient
+  context.fillRect(0, 0, canvasWidth, canvasHeight)
 
-    metaItem.style.display = 'grid'
-    metaItem.style.gap = '6px'
-    metaItem.style.padding = '14px 16px'
-    metaItem.style.borderRadius = '18px'
-    metaItem.style.border = themeConfig.panelBorder
-    metaItem.style.background = themeConfig.panelBackground
+  let cursorY = outerPadding
+  const panelX = outerPadding
+  const panelWidth = canvasWidth - outerPadding * 2
 
-    metaLabel.textContent = item.label
-    metaLabel.style.fontSize = '13px'
-    metaLabel.style.color = themeConfig.accentColor
-    metaLabel.style.letterSpacing = '0.08em'
+  fillRoundedRect(context, panelX, cursorY, panelWidth, headerHeight, 30, themePalette.panel)
+  strokeRoundedRect(context, panelX, cursorY, panelWidth, headerHeight, 30, themePalette.border)
 
-    metaValue.textContent = item.value
-    metaValue.style.margin = '0'
-    metaValue.style.fontSize = '16px'
-    metaValue.style.lineHeight = '1.7'
+  context.fillStyle = themePalette.accent
+  context.font = '600 18px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText('周易起卦台', panelX + innerPadding, cursorY + 24)
 
-    metaItem.appendChild(metaLabel)
-    metaItem.appendChild(metaValue)
-    metaGrid.appendChild(metaItem)
+  context.fillStyle = themePalette.text
+  context.font = '700 42px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText(title, panelX + innerPadding, cursorY + 58)
+
+  context.fillStyle = themePalette.subtle
+  context.font = '400 24px "Microsoft YaHei", "PingFang SC", sans-serif'
+  drawCanvasTextBlock(context, overviewLines, panelX + innerPadding, cursorY + 122, 36)
+
+  context.fillStyle = themePalette.subtle
+  context.font = '400 20px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText(`导出时间：${exportedAt}`, panelX + innerPadding, cursorY + 122 + overviewHeight + 16)
+
+  const metaGridY = cursorY + 122 + overviewHeight + 54
+  const metaCardWidth = (panelWidth - innerPadding * 2 - metaCardGap) / 2
+
+  metaItems.forEach((item, index) => {
+    const column = index % 2
+    const row = Math.floor(index / 2)
+    const cardX = panelX + innerPadding + column * (metaCardWidth + metaCardGap)
+    const cardY = metaGridY + row * (metaCardHeight + metaCardGap)
+
+    fillRoundedRect(context, cardX, cardY, metaCardWidth, metaCardHeight, 22, themePalette.panelMuted)
+    strokeRoundedRect(context, cardX, cardY, metaCardWidth, metaCardHeight, 22, themePalette.border)
+
+    context.fillStyle = themePalette.accent
+    context.font = '600 18px "Microsoft YaHei", "PingFang SC", sans-serif'
+    context.fillText(item.label, cardX + 20, cardY + 18)
+
+    context.fillStyle = themePalette.text
+    context.font = '400 24px "Microsoft YaHei", "PingFang SC", sans-serif'
+    const valueLines = wrapCanvasText(context, item.value, metaCardWidth - 40)
+    drawCanvasTextBlock(context, valueLines.slice(0, 2), cardX + 20, cardY + 48, 30)
   })
 
-  questionNode.style.display = 'grid'
-  questionNode.style.gap = '8px'
-  questionNode.style.padding = '14px 16px'
-  questionNode.style.borderRadius = '18px'
-  questionNode.style.background = themeConfig.panelMutedBackground
-  questionNode.style.border = themeConfig.panelMutedBorder
+  cursorY += headerHeight + blockGap
 
-  questionLabel.textContent = '占问事项'
-  questionLabel.style.fontSize = '14px'
-  questionLabel.style.color = themeConfig.accentColor
+  fillRoundedRect(context, panelX, cursorY, panelWidth, questionBlockHeight, 28, themePalette.panelMuted)
+  strokeRoundedRect(context, panelX, cursorY, panelWidth, questionBlockHeight, 28, themePalette.border)
 
-  questionText.textContent = safeQuestion
-  questionText.style.margin = '0'
-  questionText.style.fontSize = '17px'
-  questionText.style.lineHeight = '1.8'
+  context.fillStyle = themePalette.accent
+  context.font = '600 20px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText('占问事项', panelX + innerPadding, cursorY + 20)
 
-  footer.style.display = 'flex'
-  footer.style.alignItems = 'center'
-  footer.style.justifyContent = 'space-between'
-  footer.style.gap = '14px'
-  footer.style.flexWrap = 'wrap'
-  footer.style.padding = '12px 16px'
-  footer.style.borderRadius = '18px'
-  footer.style.border = themeConfig.panelBorder
-  footer.style.background = themeConfig.panelMutedBackground
+  context.fillStyle = themePalette.text
+  context.font = '400 24px "Microsoft YaHei", "PingFang SC", sans-serif'
+  drawCanvasTextBlock(context, questionLines, panelX + innerPadding, cursorY + 54, 34)
 
-  footerTitle.textContent = '周易起卦台 · 卦单留存'
-  footerTitle.style.fontSize = '14px'
-  footerTitle.style.letterSpacing = '0.08em'
-  footerTitle.style.color = themeConfig.accentColor
+  cursorY += questionBlockHeight + blockGap
 
-  footerMeta.textContent = `主题：${getExportThemeLabel(theme)} · 导出于 ${exportedAt}`
-  footerMeta.style.margin = '0'
-  footerMeta.style.fontSize = '13px'
-  footerMeta.style.color = themeConfig.metaColor
+  const hexagramGap = 16
+  const hexagramCardWidth = (panelWidth - hexagramGap) / 2
+  drawExportHexagramCard(
+    context,
+    themePalette,
+    '本卦',
+    baseHexagram,
+    panelX,
+    cursorY,
+    hexagramCardWidth,
+    hexagramCardHeight,
+  )
+  drawExportHexagramCard(
+    context,
+    themePalette,
+    '变卦',
+    changedHexagram,
+    panelX + hexagramCardWidth + hexagramGap,
+    cursorY,
+    hexagramCardWidth,
+    hexagramCardHeight,
+  )
 
-  questionNode.appendChild(questionLabel)
-  questionNode.appendChild(questionText)
-  footer.appendChild(footerTitle)
-  footer.appendChild(footerMeta)
-  header.appendChild(eyebrow)
-  header.appendChild(titleNode)
-  if (overviewLine) {
-    header.appendChild(overviewNode)
-  }
-  header.appendChild(metaNode)
-  header.appendChild(visualGrid)
-  if (metaItems.length > 0) {
-    header.appendChild(metaGrid)
-  }
-  header.appendChild(questionNode)
-  wrapper.appendChild(header)
-  wrapper.appendChild(cloned)
-  wrapper.appendChild(footer)
+  cursorY += hexagramCardHeight + blockGap
 
-  const measuringHost = document.createElement('div')
-  measuringHost.style.position = 'fixed'
-  measuringHost.style.left = '-99999px'
-  measuringHost.style.top = '0'
-  measuringHost.style.visibility = 'hidden'
-  measuringHost.style.pointerEvents = 'none'
-  document.body.appendChild(measuringHost)
-  measuringHost.appendChild(wrapper)
-  const fullHeight = Math.ceil(wrapper.scrollHeight)
-  document.body.removeChild(measuringHost)
+  fillRoundedRect(context, panelX, cursorY, panelWidth, bodyBlockHeight, 30, themePalette.panel)
+  strokeRoundedRect(context, panelX, cursorY, panelWidth, bodyBlockHeight, 30, themePalette.border)
 
-  const serialized = new XMLSerializer().serializeToString(wrapper)
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(rect.width)}" height="${fullHeight}">
-      <foreignObject width="100%" height="100%">${serialized}</foreignObject>
-    </svg>
-  `
-  const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-  const svgUrl = URL.createObjectURL(svgBlob)
+  context.fillStyle = themePalette.accent
+  context.font = '600 22px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText('占断全文', panelX + innerPadding, cursorY + 24)
 
-  try {
-    const image = await loadImageFromUrl(svgUrl)
-    const canvas = document.createElement('canvas')
-    const scale = Math.max(window.devicePixelRatio || 1, 2)
-    canvas.width = Math.ceil(rect.width * scale)
-    canvas.height = Math.ceil(fullHeight * scale)
+  context.fillStyle = themePalette.text
+  context.font = '400 24px "Microsoft YaHei", "PingFang SC", sans-serif'
+  drawCanvasTextBlock(context, bodyLines, panelX + innerPadding, cursorY + 66, 34)
 
-    const context = canvas.getContext('2d')
+  cursorY += bodyBlockHeight + blockGap
 
-    if (!context) {
-      throw new Error('当前浏览器环境不支持 canvas 导出。')
-    }
+  fillRoundedRect(context, panelX, cursorY, panelWidth, footerHeight, 24, themePalette.panelMuted)
+  strokeRoundedRect(context, panelX, cursorY, panelWidth, footerHeight, 24, themePalette.border)
 
-    context.scale(scale, scale)
-    context.drawImage(image, 0, 0, Math.ceil(rect.width), fullHeight)
+  context.fillStyle = themePalette.accent
+  context.font = '600 18px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText('周易起卦台 · 卦单留存', panelX + innerPadding, cursorY + 18)
 
-    const pngBlob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error('当前浏览器环境不支持图片导出。'))
-          return
-        }
+  context.fillStyle = themePalette.subtle
+  context.font = '400 18px "Microsoft YaHei", "PingFang SC", sans-serif'
+  context.fillText(
+    `主题：${getExportThemeLabel(theme)} · 导出于 ${exportedAt}`,
+    panelX + innerPadding,
+    cursorY + 46,
+  )
 
-        resolve(blob)
-      }, 'image/png')
-    })
+  const pngBlob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('当前浏览器环境不支持图片导出。'))
+        return
+      }
 
-    const saved = await saveBlobWithPicker(fileName, pngBlob, [
-      {
-        description: 'PNG 图片',
-        accept: {
-          'image/png': ['.png'],
-        },
+      resolve(blob)
+    }, 'image/png')
+  })
+
+  const saved = await saveBlobWithPicker(fileName, pngBlob, [
+    {
+      description: 'PNG 图片',
+      accept: {
+        'image/png': ['.png'],
       },
-    ])
+    },
+  ])
 
-    if (saved) {
-      return 'picker'
-    }
-
-    downloadBlobFile(fileName, pngBlob)
-    return 'download'
-  } finally {
-    URL.revokeObjectURL(svgUrl)
+  if (saved) {
+    return 'picker'
   }
+
+  downloadBlobFile(fileName, pngBlob)
+  return 'download'
 }
 
 function fallbackCopyText(text: string) {
@@ -867,6 +831,90 @@ function ActionButton({
     >
       {label}
     </button>
+  )
+}
+
+function StepCard({
+  step,
+  title,
+  description,
+  state,
+}: {
+  step: string
+  title: string
+  description: string
+  state: 'done' | 'current' | 'upcoming'
+}) {
+  return (
+    <article className={`step-card is-${state}`}>
+      <div className="step-card-index">{step}</div>
+      <div className="step-card-copy">
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      <span className="step-card-state">
+        {state === 'done' ? '已完成' : state === 'current' ? '进行中' : '待开始'}
+      </span>
+    </article>
+  )
+}
+
+function ResultOverviewSection({
+  mode,
+  coinReading,
+  meihuaReading,
+}: {
+  mode: Mode
+  coinReading: CoinReadingResult | null
+  meihuaReading: MeihuaReadingResult | null
+}) {
+  const items = (() => {
+    if (mode === 'coin' && coinReading) {
+      return [
+        { label: '本卦', value: coinReading.baseHexagram.hexagram.shortName, detail: coinReading.baseHexagram.hexagram.summary },
+        {
+          label: '动爻',
+          value:
+            coinReading.movingLines.length > 0
+              ? coinReading.movingLines.map((item) => item.name).join('、')
+              : '无动爻',
+          detail: coinReading.judgementRule.title,
+        },
+        { label: '主看', value: coinReading.judgementRule.primaryFocus, detail: coinReading.judgementRule.summary },
+        { label: '变卦', value: coinReading.changedHexagram.hexagram.shortName, detail: coinReading.changedHexagram.hexagram.summary },
+      ]
+    }
+
+    if (mode === 'meihua' && meihuaReading) {
+      return [
+        { label: '本卦', value: meihuaReading.baseHexagram.hexagram.shortName, detail: meihuaReading.baseHexagram.hexagram.summary },
+        {
+          label: '体用',
+          value: `体${meihuaReading.bodyTrigram.name}${meihuaReading.bodyTrigram.symbol} / 用${meihuaReading.useTrigram.name}${meihuaReading.useTrigram.symbol}`,
+          detail: meihuaReading.bodyUseSummary,
+        },
+        { label: '关系', value: meihuaReading.relation.label, detail: meihuaReading.relation.description },
+        { label: '变卦', value: meihuaReading.changedHexagram.hexagram.shortName, detail: meihuaReading.changedHexagram.hexagram.summary },
+      ]
+    }
+
+    return []
+  })()
+
+  if (items.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="overview-grid" aria-label="结果概览">
+      {items.map((item) => (
+        <article className="overview-card" key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+          <p>{item.detail}</p>
+        </article>
+      ))}
+    </section>
   )
 }
 
@@ -1231,12 +1279,15 @@ function App() {
   const [ritualMessage, setRitualMessage] = useState('')
   const [exportNotice, setExportNotice] = useState('')
   const resultPanelRef = useRef<HTMLElement | null>(null)
+  const coinRowRefs = useRef<Array<HTMLElement | null>>([])
   const rollingIntervalRef = useRef<number | null>(null)
   const rollingFinishRef = useRef<number | null>(null)
   const ritualMessageRef = useRef<number | null>(null)
   const exportNoticeRef = useRef<number | null>(null)
 
   const filledCoinRows = coinBoard.filter((row) => row.every(Boolean)).length
+  const nextCoinRowIndex = coinBoard.findIndex((row) => !isCoinRowComplete(row))
+  const coinCompletionRate = Math.round((filledCoinRows / 6) * 100)
 
   const coinReadingState = useMemo(() => {
     if (filledCoinRows !== 6) {
@@ -1298,6 +1349,19 @@ function App() {
   }, [coinReadingState.reading, meihuaReadingState.reading, mode, question])
 
   const isRolling = rollingRows.length > 0
+  const resultReady = mode === 'coin' ? Boolean(coinReadingState.reading) : Boolean(meihuaReadingState.reading)
+  const resultStatusLabel = resultReady ? '结果已生成' : mode === 'coin' ? '等待六爻完成' : '等待数字换算'
+  const resultStatusDescription = resultReady
+    ? '现在可以复制摘要、阅读原文，或导出文本与图片。'
+    : mode === 'coin'
+      ? `还差 ${Math.max(0, 6 - filledCoinRows)} 爻，建议按顺序继续录入。`
+      : '输入两个正整数后，会自动得到体用、五行关系与变卦。'
+  const questionCount = question.trim().length
+  const workflowStepState = {
+    chooseMode: 'done' as const,
+    enterData: resultReady ? ('done' as const) : ('current' as const),
+    readResult: resultReady ? ('current' as const) : ('upcoming' as const),
+  }
 
   useEffect(() => {
     return () => {
@@ -1391,13 +1455,26 @@ function App() {
     }, 980)
   }
 
+  function scrollToCoinRow(rowIndex: number) {
+    const target = coinRowRefs.current[rowIndex]
+
+    if (!target) {
+      return
+    }
+
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    })
+  }
+
   function updateCoinFace(rowIndex: number, coinIndex: number, face: CoinFace) {
     if (isRolling) {
       return
     }
 
-    setCoinBoard((current) =>
-      current.map((row, currentRowIndex) => {
+    setCoinBoard((current) => {
+      const nextBoard = current.map((row, currentRowIndex) => {
         if (currentRowIndex !== rowIndex) {
           return row
         }
@@ -1405,8 +1482,24 @@ function App() {
         return row.map((value, currentCoinIndex) =>
           currentCoinIndex === coinIndex ? face : value,
         ) as CoinRow
-      }),
-    )
+      })
+
+      // 当前一爻刚好录满时，自动把视线带到下一爻，减少用户来回找位置的成本。
+      // 这里不强制跳转到顶部，只滚到相邻目标附近，让桌面和移动端都更自然。
+      if (isCoinRowComplete(nextBoard[rowIndex])) {
+        const nextIncompleteIndex = nextBoard.findIndex(
+          (row, currentRowIndex) => currentRowIndex > rowIndex && !isCoinRowComplete(row),
+        )
+
+        if (nextIncompleteIndex !== -1) {
+          window.setTimeout(() => {
+            scrollToCoinRow(nextIncompleteIndex)
+          }, 140)
+        }
+      }
+
+      return nextBoard
+    })
   }
 
   function resetCoinBoard() {
@@ -1529,9 +1622,21 @@ function App() {
         return
       }
 
+      const exportText = buildExportTextDocument({
+        mode,
+        question,
+        coinReading: coinReadingState.reading,
+        meihuaReading: meihuaReadingState.reading,
+        exportedAt,
+        exportTheme,
+      })
+
+      if (!exportText.trim()) {
+        return
+      }
+
       const fileName = `suangua-${mode === 'coin' ? 'jinqiangua' : 'meihuayishu'}-${getExportThemeFileKey(exportTheme)}-${fileStamp}.png`
       const saveMethod = await exportReadingAsImage({
-        element: resultPanelRef.current,
         fileName,
         title: getReadingTitle(mode),
         exportedAt,
@@ -1549,6 +1654,7 @@ function App() {
         theme: exportTheme,
         baseHexagram,
         changedHexagram,
+        bodyText: exportText,
       })
       setTemporaryExportNotice(
         saveMethod === 'picker'
@@ -1574,11 +1680,23 @@ function App() {
           </p>
         </div>
 
-        <div className="hero-highlights">
-          <span>双模式切换</span>
-          <span>六爻动态展示</span>
-          <span>体用五行分析</span>
-          <span>移动端自适应</span>
+        <div className="hero-side">
+          <div className="hero-highlights">
+            <span>双模式切换</span>
+            <span>六爻动态展示</span>
+            <span>体用五行分析</span>
+            <span>移动端自适应</span>
+          </div>
+
+          <div className="hero-insight-card">
+            <span>当前流程</span>
+            <strong>{mode === 'coin' ? '逐爻起卦，先成象后观变' : '双数起卦，快速看体用关系'}</strong>
+            <p>
+              {mode === 'coin'
+                ? `已经完成 ${filledCoinRows} / 6 爻，结果区会在录满后即时展开。`
+                : '输入两个数字后，右侧会立即给出本卦、体用、五行与变卦。'}
+            </p>
+          </div>
         </div>
       </header>
 
@@ -1606,10 +1724,46 @@ function App() {
             <span>双数字起卦，快速速断</span>
           </button>
         </div>
+
+        <div className="mode-notes">
+          <article className="mode-note-card">
+            <strong>金钱卦适合</strong>
+            <p>想细看每一爻的变化过程，适合需要逐步推演的情境。</p>
+          </article>
+          <article className="mode-note-card">
+            <strong>梅花易数适合</strong>
+            <p>想快速得到方向判断，适合先看体用强弱与后续走势。</p>
+          </article>
+        </div>
       </section>
 
       <main className="workspace">
         <section className="input-panel">
+          <section className="workflow-steps" aria-label="使用步骤">
+            <StepCard
+              step="01"
+              title="选择起卦方式"
+              description="根据你的问题场景，决定是逐爻起卦还是快速速断。"
+              state={workflowStepState.chooseMode}
+            />
+            <StepCard
+              step="02"
+              title={mode === 'coin' ? '录入六爻信息' : '输入两个数字'}
+              description={
+                mode === 'coin'
+                  ? '从下往上依次完成六爻，系统会自动换算本卦与动爻。'
+                  : '输入两个正整数后，系统会自动换算上下卦、动爻与体用。'
+              }
+              state={workflowStepState.enterData}
+            />
+            <StepCard
+              step="03"
+              title="查看结果并导出"
+              description="生成后可直接复制摘要，也可导出文本或图片留存。"
+              state={workflowStepState.readResult}
+            />
+          </section>
+
           {mode === 'coin' ? (
             <>
               <div className="panel-head">
@@ -1651,6 +1805,47 @@ function App() {
                 <span>录入顺序：初爻 → 上爻</span>
               </div>
 
+              <section className="progress-card" aria-label="录入进度">
+                <div className="progress-card-head">
+                  <div>
+                    <strong>录入进度</strong>
+                    <p>
+                      {nextCoinRowIndex === -1
+                        ? '六爻已齐，可以直接查看完整结果。'
+                        : `下一步建议先完成${getLineName(nextCoinRowIndex + 1)}。`}
+                    </p>
+                  </div>
+                  <span className="summary-chip">{`${coinCompletionRate}%`}</span>
+                </div>
+                <div className="progress-track" aria-hidden="true">
+                  <span className="progress-fill" style={{ width: `${coinCompletionRate}%` }} />
+                </div>
+                <div className="line-navigator">
+                  {coinBoard.map((row, rowIndex) => {
+                    const isComplete = isCoinRowComplete(row)
+                    const isCurrent = !isComplete && rowIndex === nextCoinRowIndex
+
+                    return (
+                      <button
+                        key={`line-nav-${rowIndex + 1}`}
+                        type="button"
+                        className={[
+                          'line-nav-button',
+                          isComplete ? 'is-complete' : '',
+                          isCurrent ? 'is-current' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() => scrollToCoinRow(rowIndex)}
+                      >
+                        <span>{getLineName(rowIndex + 1)}</span>
+                        <strong>{isComplete ? '已定' : isCurrent ? '当前' : '待录入'}</strong>
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
+
               {ritualMessage ? <div className="ritual-banner">{ritualMessage}</div> : null}
 
               <div className="coin-list">
@@ -1661,10 +1856,14 @@ function App() {
 
                   return (
                     <article
+                      ref={(element) => {
+                        coinRowRefs.current[rowIndex] = element
+                      }}
                       className={[
                         'coin-row',
                         isComplete ? 'is-complete' : '',
                         isRollingRow ? 'is-rolling' : '',
+                        !isComplete && rowIndex === nextCoinRowIndex ? 'is-next' : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}
@@ -1781,8 +1980,24 @@ function App() {
                 onChange={(event) => setQuestion(event.target.value)}
                 placeholder="例如：这次合作是否适合继续推进？近期换工作时机如何？"
               />
-              <small>不填写也可以，仅按卦象本身输出摘要。</small>
+              <div className="question-field-foot">
+                <small>不填写也可以，仅按卦象本身输出摘要。</small>
+                <span>{`${questionCount} 字`}</span>
+              </div>
             </label>
+
+            <div className="question-suggestions">
+              {QUESTION_SUGGESTIONS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={question.trim() === item ? 'question-chip is-active' : 'question-chip'}
+                  onClick={() => setQuestion(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
           </section>
         </section>
 
@@ -1824,7 +2039,24 @@ function App() {
             </div>
           </div>
 
+          <section className="result-status">
+            <div>
+              <p className="result-label">当前状态</p>
+              <strong>{resultStatusLabel}</strong>
+              <p>{resultStatusDescription}</p>
+            </div>
+            <span className={`status-badge ${resultReady ? 'is-ready' : ''}`}>
+              {resultReady ? '可复制 / 可导出' : '等待生成'}
+            </span>
+          </section>
+
           {exportNotice ? <div className="notice-banner">{exportNotice}</div> : null}
+
+          <ResultOverviewSection
+            mode={mode}
+            coinReading={coinReadingState.reading}
+            meihuaReading={meihuaReadingState.reading}
+          />
 
           {summaryText ? (
             <section className="result-card">
@@ -1882,6 +2114,11 @@ function App() {
               <div className="empty-state">
                 <strong>等待六爻录入完成</strong>
                 <p>{coinReadingState.message}</p>
+                <div className="empty-state-tips">
+                  <span>1. 先从初爻开始选择三枚硬币</span>
+                  <span>2. 每录满一爻，页面会自动提示下一步</span>
+                  <span>3. 六爻完成后，右侧会立即展开本卦与动爻解读</span>
+                </div>
               </div>
             )
           ) : meihuaReadingState.reading ? (
@@ -1919,6 +2156,11 @@ function App() {
             <div className="empty-state">
               <strong>等待数字输入</strong>
               <p>{meihuaReadingState.message}</p>
+              <div className="empty-state-tips">
+                <span>1. 第一个数字决定上卦</span>
+                <span>2. 第二个数字决定下卦</span>
+                <span>3. 两数相加后自动换算动爻与体用</span>
+              </div>
             </div>
           )}
         </aside>
