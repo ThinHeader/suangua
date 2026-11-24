@@ -1,32 +1,33 @@
-# React + TypeScript + Vite
+# 算卦
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+一个基于 React + TypeScript + Vite 的在线起卦小工具，部署在 [gua.dongpouu.top](https://gua.dongpouu.top/)。
 
-Currently, two official plugins are available:
+用户选择起卦方式后，前端完成卦象计算与结果展示，纯静态站点，无需后端。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 本地运行
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+生产构建：
+
+```bash
+npm run build
+```
+
+## 技术栈
+
+- React + TypeScript
+- Vite
+- Oxlint
+
+
+## 开源协议
+
+本项目采用 [CC BY-NC-SA 4.0](LICENSE)（署名-非商业性使用-相同方式共享 4.0 国际）协议公开发布。
+
+- 可以署名分享、修改、二次开发，但**禁止任何商业使用**。
+- 衍生作品必须沿用相同协议。
+- 注意：CC BY-NC-SA 不是 OSI 认证的开源许可证，属于「公开源码 + 非商用」授权。
